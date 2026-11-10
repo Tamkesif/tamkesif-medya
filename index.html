@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1">
+<meta name="theme-color" content="#0f2740">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="BKM Door">
+<link rel="apple-touch-icon" href="img/icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
+<title>BKM Door</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header id="top">
+  <button id="back" class="ib" aria-label="Geri" hidden>‹</button>
+  <h1 id="title">BKM Door</h1>
+  <button id="gear" class="ib" aria-label="Ayarlar">⚙︎</button>
+</header>
+<main id="view"></main>
+<nav id="tabs">
+  <button data-go="home"><i>⌂</i><span>Ana</span></button>
+  <button data-go="olculer"><i>📏</i><span>Ölçü</span></button>
+  <button data-go="teklifler"><i>₺</i><span>Teklif</span></button>
+  <button data-go="servisler"><i>🔧</i><span>Servis</span></button>
+  <button data-go="notlar"><i>✎</i><span>Notlar</span></button>
+</nav>
+<div id="sheet" hidden><div class="sh-bg"></div><div class="sh-box"><div class="sh-grip"></div><div id="sheetBody"></div></div></div>
+<div id="toast"></div>
+<div id="pdfroot"></div>
+<script src="app.js"></script>
+</body>
+</html>
