@@ -350,7 +350,7 @@ const grupKalem = (t, g) => (t.kalemler || []).filter(l => !t.secenekli || (num(
 function hesapG(t, kal) {
   const ara = kal.reduce((s, l) => s + satirMiktar(l) * num(l.fiyat), 0);
   const isk = 0;
-  const mat = ara; const r = num(t.kdvOran ?? S.kdv) / 100;
+  const mat = ara; const r = 0.20;
   let kdv = 0, genel = mat;
   if (t.kdvMod === 'ekle') { kdv = mat * r; genel = mat + kdv; }
   else if (t.kdvMod === 'dahil') { kdv = mat - mat / (1 + r); }
@@ -423,8 +423,7 @@ V.teklif = async id => {
     <div class="btns" style="margin-top:0"><button class="btn ghost" data-a="kalemEkle" data-g="${gi}">+ Ürün ekle</button><button class="btn ghost" data-a="olcudenAktar" data-g="${gi}">📏 Ölçüden aktar</button></div>
     ${t.secenekli ? `<div class="card" style="margin-top:8px">${totsHTML(t, hesapG(t, grupKalem(t, gi)))}</div>` : ''}`).join('')}
   <div class="card" style="margin-top:12px">
-    ${field('KDV oranı (%)', inp('kdvOran', t.kdvOran, '', 'inputmode="decimal"'))}
-    ${field('KDV', sc('kdvMod', t.kdvMod, ['ekle', 'dahil', 'yok'], ['KDV ekle', 'Fiyatlar KDV dahil', 'KDV yazma']))}
+    <div class="tog"><span>KDV %20 ekle</span><label class="sw"><input type="checkbox" data-a="kdvTog" ${t.kdvMod === 'ekle' ? 'checked' : ''}><i></i></label></div>
     ${t.secenekli ? '' : `<div id="tots">${totsHTML(t, hesap(t))}</div>`}</div>
   <h2>Şartlar</h2>
   <div class="card">
@@ -444,7 +443,7 @@ function totsHTML(t, h) {
   const c = t.para;
   return `<div class="tot"><span>Toplam</span><b>${money(h.ara, c)}</b></div>
   ${h.isk ? `<div class="tot"><span>İskonto %${n2(num(t.iskonto))}</span><b>−${money(h.isk, c)}</b></div><div class="tot"><span>Ara toplam</span><b>${money(h.mat, c)}</b></div>` : ''}
-  ${t.kdvMod === 'ekle' ? `<div class="tot"><span>KDV %${n2(num(t.kdvOran))}</span><b>${money(h.kdv, c)}</b></div>` : ''}
+  ${t.kdvMod === 'ekle' ? `<div class="tot"><span>KDV %20</span><b>${money(h.kdv, c)}</b></div>` : ''}
   <div class="tot big"><span>G. Toplam</span><span>${money(h.genel, c)}</span></div>
   ${t.kdvMod === 'dahil' ? `<div class="mut sm" style="text-align:right">KDV dahildir (${money(h.kdv, c)})</div>` : ''}`;
 }
@@ -493,7 +492,7 @@ function kalemlerEklendi(t, yeni) {
 const servisRow = s => `<div class="li" data-a="go" data-h="servis/${s.id}"><div class="ico">🔧</div><div class="grow"><b>${esc(s.musteri?.ad || 'İsimsiz servis')}</b><span class="mut sm">No ${esc(s.no)} · ${trDate(s.tarih)} · ${esc((s.tur || []).join(', ') || '')}</span></div><span class="amt">${money(servisHesap(s).genel)}</span></div>`;
 function servisHesap(s) {
   const top = (s.malzeme || []).reduce((t, m) => t + num(m.adet) * num(m.fiyat), 0);
-  const kdv = s.kdvEkle ? top * num(s.kdvOran ?? S.kdv) / 100 : 0;
+  const kdv = s.kdvEkle ? top * 0.20 : 0;
   return { top, kdv, genel: top + kdv };
 }
 V.servisler = async () => {
@@ -516,20 +515,20 @@ V.servis = async id => {
       <div class="row">${inp(`malzeme.${i}.ad`, m.ad, 'Malzeme adı', 'list="malist"')}<button class="x" data-a="malSil" data-i="${i}">✕</button></div>
       <div class="g3" style="margin-top:8px">${inp(`malzeme.${i}.adet`, m.adet, 'Adet', 'inputmode="decimal"')}${inp(`malzeme.${i}.fiyat`, m.fiyat, 'Birim ₺', 'inputmode="decimal"')}<div class="mt" data-i="${i}" style="align-self:center;text-align:right;font-weight:700">${money(num(m.adet) * num(m.fiyat))}</div></div></div>`).join('')}
     <button class="btn ghost full" data-a="malEkle">+ Malzeme / işçilik ekle</button>
-    <div style="margin-top:12px">${tog('KDV ekle', 'kdvEkle', s.kdvEkle)}${s.kdvEkle ? field('KDV oranı (%)', inp('kdvOran', s.kdvOran, '', 'inputmode="decimal"')) : ''}</div>
+    <div style="margin-top:12px">${tog('KDV %20 ekle', 'kdvEkle', s.kdvEkle)}</div>
     <div id="tots">${servisTots(s, h)}</div></div>
   <h2>Teslim</h2>
   <div class="card">${field('Teslim alan (ad soyad)', inp('teslimAlan', s.teslimAlan, 'Müşteri yetkilisi'))}
     <div class="row" style="margin-bottom:6px"><b class="grow sm">Teslim alan imzası</b><button class="btn ghost" style="min-height:34px;padding:4px 12px" data-a="imzaSil">Temizle</button></div>
     <canvas class="sig" id="sig"></canvas><div class="mut sm" style="margin-top:4px">Müşteri parmağıyla buraya imza atar.</div>
     <div style="height:10px"></div>
-    ${field('Teslim eden', inp('teslimEden', s.teslimEden, 'Bilal Bekem'))}
+    ${field('Teslim eden', inp('teslimEden', s.teslimEden, S.unvan))}
     ${tog('Kaşe-imza koy (teslim eden)', 'kase', s.kase, 1)}
   </div>
   <button class="btn acc full" data-a="pdf" data-k="servis">📤 PDF hazırla / WhatsApp</button>
   <div class="btns"><button class="btn ghost" data-a="kopya">Kopyala</button><button class="btn red" data-a="sil">Sil</button></div>`;
 };
-const servisTots = (s, h) => `<div class="tot"><span>Toplam</span><b>${money(h.top)}</b></div>${s.kdvEkle ? `<div class="tot"><span>KDV %${n2(num(s.kdvOran))}</span><b>${money(h.kdv)}</b></div>` : ''}<div class="tot big"><span>G. Toplam</span><span>${money(h.genel)}</span></div>`;
+const servisTots = (s, h) => `<div class="tot"><span>Toplam</span><b>${money(h.top)}</b></div>${s.kdvEkle ? `<div class="tot"><span>KDV %20</span><b>${money(h.kdv)}</b></div>` : ''}<div class="tot big"><span>G. Toplam</span><span>${money(h.genel)}</span></div>`;
 
 function initSig() {
   const c = $('#sig'); if (!c) return;
@@ -570,7 +569,7 @@ V.ayarlar = async () => {
   <h2>Logo ve kaşe</h2><div class="card">
     <div class="imgbox" style="margin-bottom:12px"><img src="${S.logo || 'img/logo.png'}"><div class="grow"><b>Logo</b><br><label class="btn ghost" style="min-height:38px;margin-top:6px">Değiştir<input type="file" accept="image/*" data-img="logo" hidden></label></div></div>
     <div class="imgbox">${S.kase ? `<img src="${S.kase}">` : '<div class="ico" style="width:70px;height:60px">—</div>'}<div class="grow"><b>Kaşe + imza</b>${S.kase ? '' : ' <span class="tag r">yüklenmedi</span>'}<div class="mut sm">Beyaz kâğıda bas, imzala, yakından fotoğrafını çek. Beyaz arka plan otomatik temizlenir.</div><label class="btn ghost" style="min-height:38px;margin-top:6px">Fotoğraf yükle<input type="file" accept="image/*" data-img="kase" hidden></label></div></div></div>
-  <h2>Teklif</h2><div class="card"><div class="g2">${b('kdv', 'KDV %', '', 'inputmode="decimal"')}${b('teklifNo', 'Sıradaki no', '', 'inputmode="numeric"')}</div>${b('kkOran', 'Kredi kartı komisyon %', '', 'inputmode="decimal"')}</div>
+  <h2>Teklif</h2><div class="card"><div class="g2">${b('teklifNo', 'Sıradaki no', '', 'inputmode="numeric"')}</div>${b('kkOran', 'Kredi kartı komisyon %', '', 'inputmode="decimal"')}</div>
   <h2>Servis formu</h2><div class="card">${b('servisNo', 'Sıradaki servis no', '', 'inputmode="numeric"')}${ta('servisSart', 'Form alt notu')}</div>
   <h2>Hatırlatma</h2><div class="card">${b('hatirlatSaat', 'Her gün saat', '', 'type="time"')}</div>
   <h2>Kütüphane</h2>
@@ -620,7 +619,7 @@ async function yeni(store, extra = {}) {
   const y = today().slice(0, 4);
   if (store === 'olculer') o = { tarih: today(), musteri: {}, items: [], not: '' };
   if (store === 'teklifler') { o = { tip: 'urun', no: String(S.teklifNo).padStart(6, '0'), tarih: today(), musteri: {}, konu: '', kalemler: [], durum: 'Taslak', para: 'TL', iskonto: '', kdvOran: S.kdv, kdvMod: 'ekle', secenekli: false, gruplar: [''], sart: { ...SART_DEF }, kase: true }; S.teklifNo = num(S.teklifNo) + 1; await saveS(); }
-  if (store === 'servisler') { o = { no: String(S.servisNo).padStart(6, '0'), tarih: today(), musteri: {}, tur: ['Servis'], kapi: '', yapilan: '', malzeme: [{ ad: '', adet: 1, fiyat: '' }], kdvEkle: false, kdvOran: S.kdv, teslimAlan: '', teslimEden: S.yetkili, kase: true, imza: '' }; S.servisNo = num(S.servisNo) + 1; await saveS(); }
+  if (store === 'servisler') { o = { no: String(S.servisNo).padStart(6, '0'), tarih: today(), musteri: {}, tur: ['Servis'], kapi: '', yapilan: '', malzeme: [{ ad: '', adet: 1, fiyat: '' }], kdvEkle: false, kdvOran: S.kdv, teslimAlan: '', teslimEden: S.unvan, kase: true, imza: '' }; S.servisNo = num(S.servisNo) + 1; await saveS(); }
   o = { id: uid(), upd: Date.now(), ...o, ...extra };
   await DB.put(store, o);
   D = o; DS = store; UI.open = {};
@@ -737,6 +736,7 @@ const A = {
   mkat: el => { UI.mkat = el.dataset.v; render(true); },
   modelDuz: el => { const m = MODELS.find(x => x.id === el.dataset.id) || { kat: UI.mkat || 'kepenk', ad: '', teknik: '', fiyat: '', birim: 'adet', para: 'TL' }; openSheet(modelForm(m)); },
   modelKaydet: async el => { const id = el.dataset.id; const m = MODELS.find(x => x.id === id) || { id: uid(), auto: '' }; Object.assign(m, { kat: $('#m_kat').value, ad: $('#m_ad').value.trim(), konu: $('#m_konu').value.trim(), resim: $('#m_img').style.display === 'none' ? '' : $('#m_img').getAttribute('src'), teknik: $('#m_tek').value, fiyat: $('#m_fiy').value, birim: $('#m_bir').value, para: $('#m_par').value }); if (!m.ad) return toast('Model adı yazın'); await DB.put('modeller', m); MODELS = await DB.all('modeller'); closeSheet(); render(true); toast('Kaydedildi'); },
+  kdvTog: el => { D.kdvMod = el.checked ? 'ekle' : 'yok'; queueSave(); render(true); },
   pinDegis: async () => { const v = $('#yeniPin').value.trim(); if (!/^\d{4,12}$/.test(v)) return toast('En az 4 rakam gir'); S.pinHash = await sha(v); await saveS(); $('#yeniPin').value = ''; toast('Şifre değişti'); },
   mResimSil: () => { $('#m_img').style.display = 'none'; $('#m_img').src = ''; },
   modelSil: async el => { if (!confirm('Model silinsin mi?')) return; await DB.del('modeller', el.dataset.id); MODELS = await DB.all('modeller'); closeSheet(); render(true); },
@@ -787,7 +787,7 @@ function teklifPDF(t) {
       return `<tr class="pb"><td class="c">${no}</td><td class="c">${img ? `<img src="${img}">` : ''}</td><td class="c tn">${os ? `<div class="red b">${esc(os)}</div>` : ''}${l.ad ? `<div class="b">${esc(l.ad)}</div>` : ''}${ts.map(x => `<div>${esc(x)}</div>`).join('')}</td><td class="c">${n2(q)} ${esc(l.birim || 'Adet')}</td><td class="r">${money(num(l.fiyat), c)}</td><td class="r b">${money(q * num(l.fiyat), c)}</td></tr>`; }).join('')}
     </tbody></table>
     <table class="tot2 pb"><tr><td>Toplam</td><td>${money(h.ara, c)}</td></tr>
-    ${t.kdvMod === 'ekle' ? `<tr><td>KDV %${n2(num(t.kdvOran))}</td><td>${money(h.kdv, c)}</td></tr>` : t.kdvMod === 'dahil' ? `<tr><td>KDV (dahil)</td><td>${money(h.kdv, c)}</td></tr>` : ''}
+    ${t.kdvMod === 'ekle' ? `<tr><td>KDV %20</td><td>${money(h.kdv, c)}</td></tr>` : t.kdvMod === 'dahil' ? `<tr><td>KDV (dahil)</td><td>${money(h.kdv, c)}</td></tr>` : ''}
     <tr class="g"><td>G. Toplam</td><td>${money(h.genel, c)}</td></tr></table>`;
   };
   const G = gruplar(t);
@@ -813,9 +813,9 @@ function servisPDF(s) {
   ${rows.map(x => `<tr class="pb"><td>${esc(x.ad)}</td><td class="n">${n2(num(x.adet))}</td><td class="n">${money(num(x.fiyat))}</td><td class="n"><b>${money(num(x.adet) * num(x.fiyat))}</b></td></tr>`).join('') || '<tr><td colspan="4" style="color:#999">—</td></tr>'}
   </tbody></table>
   <div class="pb" style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px;margin-top:10px"><div class="terms" style="margin:0;border:0;padding:0;flex:1;font-weight:700">${esc(s.kdvEkle ? (S.servisSart || '').replace(/.*KDV dahil değildir\.?\n?/i, '') : S.servisSart)}</div>
-  <div class="tots" style="margin-top:0"><div><span>Toplam</span><b>${money(h.top)}</b></div><div><span>KDV${s.kdvEkle ? ' %' + n2(num(s.kdvOran)) : ''}</span><b>${s.kdvEkle ? money(h.kdv) : '—'}</b></div><div class="g"><span>G. TOPLAM</span><span>${money(h.genel)}</span></div></div></div>
+  <div class="tots" style="margin-top:0"><div><span>Toplam</span><b>${money(h.top)}</b></div><div><span>KDV${s.kdvEkle ? ' %20' : ''}</span><b>${s.kdvEkle ? money(h.kdv) : '—'}</b></div><div class="g"><span>G. TOPLAM</span><span>${money(h.genel)}</span></div></div></div>
   <div class="pb" style="margin-top:22px;font-weight:700;text-align:center;font-size:12px;color:#0f2740">MALZEMELERİ EKSİKSİZ VE ÇALIŞIR DURUMDA TESLİM ALDIM</div>
-  <div class="sigs pb" style="margin-top:10px"><div><div class="sp">${s.imza ? `<img src="${s.imza}">` : ''}</div><b>TESLİM ALAN</b><br>${esc(s.teslimAlan)}</div><div><div class="sp" style="font-size:14px">${trDate(s.tarih)}</div><b>TARİH</b></div><div><div class="sp">${s.kase && S.kase ? `<img src="${S.kase}">` : ''}</div><b>TESLİM EDEN</b><br>${esc(s.teslimEden)}</div></div></div>`;
+  <div class="sigs pb" style="margin-top:10px"><div><div class="sp">${s.imza ? `<img src="${s.imza}">` : ''}</div><b>TESLİM ALAN</b><br>${esc(s.teslimAlan)}</div><div><div class="sp" style="font-size:14px">${trDate(s.tarih)}</div><b>TARİH</b></div><div><div class="sp">${s.kase && S.kase ? `<img src="${S.kase}">` : ''}</div><b>TESLİM EDEN</b><br>${esc(!s.teslimEden || s.teslimEden === S.yetkili ? S.unvan : s.teslimEden)}</div></div></div>`;
 }
 
 /* ---------------- PDF motoru (her sayfada başlık + alt bilgi) ---------------- */
